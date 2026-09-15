@@ -79,3 +79,22 @@ def fetch_location_weather(
         ) from exc
 
     return parsed
+
+def extract_all(
+    locations: list[Location], api_cfg: ApiConfig, forecast_days: int
+) -> dict[str, OpenMeteoResponse]:
+    """
+    Fetch every configured location. A single failed location is logged
+    and skipped rather than aborting the whole run — partial data beats
+    no data for a scheduled pipeline.
+    """
+    results: dict[str, OpenMeteoResponse] = {}
+    for location in locations:
+        try:
+            results[location.name] = fetch_location_weather(
+                location, api_cfg, forecast_days
+            )
+        except ExtractionError as exc:
+            log.error(str(exc))
+    return results
+
