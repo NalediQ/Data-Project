@@ -1,0 +1,34 @@
+# Configuration for the Weather ETL pipeline.
+# Edit this file to add/remove locations or change pipeline behaviour —
+# no code changes required.
+
+api:
+  base_url: "https://api.open-meteo.com/v1/forecast"
+  timeout_seconds: 10
+  max_retries: 3
+  retry_backoff_seconds: 2
+
+locations:
+  - name: "Cape Town"
+    country: "South Africa"
+    latitude: -33.9249
+    longitude: 18.4241
+  - name: "Johannesburg"
+    country: "South Africa"
+    latitude: -26.2041
+    longitude: 28.0473
+  - name: "Durban"
+    country: "South Africa"
+    latitude: -29.8587
+    longitude: 31.0218
+  - name: "Pretoria"
+    country: "South Africa"
+    latitude: -25.7479
+    longitude: 28.2293
+
+database:
+  path: "data/weather.db"
+
+pipeline:
+  hourly_forecast_days: 1   # how many days of hourly data to pull each run
+  schedule_interval_hours: 1
