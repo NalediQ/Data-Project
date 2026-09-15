@@ -41,3 +41,20 @@ class AppConfig:
     db_path: Path
     hourly_forecast_days: int
     schedule_interval_hours: int
+
+def load_config(path: Path = CONFIG_PATH) -> AppConfig:
+    with open(path, "r", encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+
+    api = ApiConfig(**raw["api"])
+    locations = [Location(**loc) for loc in raw["locations"]]
+    db_path = PROJECT_ROOT / raw["database"]["path"]
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    return AppConfig(
+        api=api,
+        locations=locations,
+        db_path=db_path,
+        hourly_forecast_days=raw["pipeline"]["hourly_forecast_days"],
+        schedule_interval_hours=raw["pipeline"]["schedule_interval_hours"],
+    )
