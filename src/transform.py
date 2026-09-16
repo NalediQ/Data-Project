@@ -43,4 +43,43 @@ def _response_to_frame(location: Location, response: OpenMeteoResponse) -> pd.Da
     df["longitude"] = location.longitude
     return df
 
+def transform_all(
+    locations: list[Location], responses: dict[str, OpenMeteoResponse]
+) -> pd.DataFrame:
+    """Build one clean, deduplicated DataFrame from every location's response."""
+    frames = [
+        _response_to_frame(loc, responses[loc.name])
+        for loc in locations
+        if loc.name in responses
+    ]
+    if not frames:
+        log.warning("No data to transform — every extraction call failed.")
+        return pd.DataFrame()
 
+    df = pd.concat(frames, ignore_index=True)
+
+    before = len(df)
+    df = df.drop_duplicates(subset=["location_name", "timestamp"])
+    if len(df) != before:
+        log.info(f"Dropped {before - len(df)} duplicate rows during transform.")
+
+    # Data-quality checks: flag values outside physically plausible ranges
+    # rather than silently keeping bad readings.
+    quality_mask = (
+        df["temperature_c"].between(-40, 55)
+        & df["humidity_pct"].between(0, 100)
+        & df["precipitation_mm"].ge(0)
+        & df["wind_speed_kmh"].ge(0)
+    )
+    bad_rows = (~quality_mask).sum()
+    if bad_rows:
+        log.warning(f"Dropping {bad_rows} rows that failed data-quality checks.")
+    df = df[quality_mask].copy()
+
+    # Derived / enriched columns
+    df["weather_description"] = df["weather_code"].map(_WEATHER_CODE_MAP).fillna("Unknown")
+    df["temperature_f"] = (df["temperature_c"] * 9 / 5) + 32
+    df["is_rainy"] = df["precipitation_mm"] > 0
+    df["ingested_at"] = pd.Timestamp.now("UTC")
+
+    return df.reset_index(drop=True)
