@@ -73,6 +73,7 @@ weather_code, weather_description, is_rainy, ingested_at`
 | Logging | `src/logger.py` (loguru, file + console) |
 | Run auditability | `pipeline_run_log` table |
 | Configuration management | `config/config.yaml`, `.env` |
+| Data browsing / inspection |	view_data.py |
 | Automated testing | `tests/` (pytest) |
 | Documentation | this file |
 
@@ -93,6 +94,12 @@ python main.py
 
 # Recurring run (hourly by default — set in config.yaml)
 python scheduler.py
+
+# View stored data as a clean table in the terminal
+python view_data.py
+python view_data.py --city "Cape Town" --limit 10
+python view_data.py --all-columns
+
 ```
 
 ## Running the tests
@@ -114,4 +121,4 @@ never touch `data/weather.db` or the real API.
   `transform.py`.
 - Swap databases: change the connection string in `database.get_engine`.
 - Add a dashboard: read from `fact_weather_hourly` with
-  `pandas.read_sql` — see `main.py`'s `print_summary()` for the pattern.
+  `pandas.read_sql` — see 'view_data.py' or `main.py`'s `print_summary()` for the pattern.
